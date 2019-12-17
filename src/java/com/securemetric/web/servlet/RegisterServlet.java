@@ -180,39 +180,57 @@ public class RegisterServlet extends HttpServlet {
 //        }
 
 //        out.print(gson.toJson(returnData));
-            this.unRegisterDevice(username);
+//            this.unRegisterDevice(username);
+//
+//            com.sun.jersey.api.client.Client client = RestfulUtil.buildClient();
+//            HashMap<String, String> map = new HashMap();
+//            map.put("username", username);
+//            map.put("status", "2");
+//            map.put("validity", "300000");
+//            map.put("cenToken", APIController.getCenToken());
+//            WebResource service = client.resource(APIController.getBaseURI()).path("device").path("register").path("onetimepin").path("webadmin");
+//            
+//       
+//
+//        final Gson gson = new Gson();
+//            ClientResponse response = service.accept(MediaType.APPLICATION_JSON).put(ClientResponse.class, gson.toJson(map));
+//
+//            String authString = response.getEntity(String.class);    
+//            System.out.println(authString);
+//            /* Read the output returned from the authentication */
+//            if (response.getStatus() == 200) {
+//                
+//                
+//                HashMap<String, String> responseMap = gson.fromJson(authString, HashMap.class);
+//                String code = responseMap.get("code");
+//                /* Return object on json format */
+//                String object = responseMap.get("object");
+//                /* Return object on json format */
+//                HashMap<String, String> authMap = gson.fromJson(object, HashMap.class);
+//                if ("0".equals(code)) {
+//                    out.print(authMap.get("passcode"));
+//                } else {
+//                    out.print(responseMap.get("message"));
+//                }
+//            }
 
-            com.sun.jersey.api.client.Client client = RestfulUtil.buildClient();
-            HashMap<String, String> map = new HashMap();
-            map.put("username", username);
-            map.put("status", "2");
-            map.put("validity", "300000");
-            map.put("cenToken", APIController.getCenToken());
-            WebResource service = client.resource(APIController.getBaseURI()).path("device").path("register").path("onetimepin").path("webadmin");
-            
-       
+        com.sun.jersey.api.client.Client client = RestfulUtil.buildClient();
+        HashMap<String, String> map = new HashMap();
+        map.put("username", "thanhthanhthanh");
+        map.put("firstName", "Thanh");
+        map.put("lastName", "Nguyen Dang");
+        map.put("userApp", "testSMS2");
+        map.put("userUniqueId", " ");
+        map.put("userClientId", "thanhthanhthanh");
+        map.put("cenToken", "2681f8b16d8182222dbb79d76e14ab77e5afde71baac2eccbe9826508ee81090");
 
-        final Gson gson = new Gson();
-            ClientResponse response = service.accept(MediaType.APPLICATION_JSON).put(ClientResponse.class, gson.toJson(map));
+        //map.put("cenToken", APIController.getCenToken());
+        WebResource service = client.resource(UriBuilder.fromUri("https://118.70.13.108:3443/CentagateWS/webresources").build()).path("user").path("registerUserActivate").path("webadmin");
 
-            String authString = response.getEntity(String.class);    
-            System.out.println(authString);
-            /* Read the output returned from the authentication */
-            if (response.getStatus() == 200) {
-                
-                
-                HashMap<String, String> responseMap = gson.fromJson(authString, HashMap.class);
-                String code = responseMap.get("code");
-                /* Return object on json format */
-                String object = responseMap.get("object");
-                /* Return object on json format */
-                HashMap<String, String> authMap = gson.fromJson(object, HashMap.class);
-                if ("0".equals(code)) {
-                    out.print(authMap.get("passcode"));
-                } else {
-                    out.print(responseMap.get("message"));
-                }
-            }
+        for (int i=0;i<5;i++) {
+            new Thread(new AddUserThread(service, map)).start();
+        }
+
     }
     
     private void unRegisterDevice(String username) throws Exception {
@@ -1056,4 +1074,23 @@ public class RegisterServlet extends HttpServlet {
         return "RESTful utility";
     }// </editor-fold>
 
+}
+
+class AddUserThread implements Runnable {
+    private final WebResource service;
+    private final HashMap<String, String> map;
+
+    public AddUserThread(WebResource service, HashMap<String, String> map) {
+        this.service = service;
+        this.map = map;
+    }
+    
+    @Override
+    public void run() {
+        final ClientResponse response = service.accept(MediaType.APPLICATION_JSON).put(ClientResponse.class, new Gson().toJson(map));
+        System.out.println(response.getStatus());
+        String authString = response.getEntity(String.class);    
+        System.out.println(authString);
+    }
+    
 }

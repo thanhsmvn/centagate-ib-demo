@@ -5,23 +5,21 @@
  */
 package com.securemetric.web.api;
 
+import com.google.gson.Gson;
+import com.securemetric.web.servlet.RestfulUtil;
 import com.securemetric.web.util.Config;
-import com.sun.jersey.core.util.Base64;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 import java.net.URI;
 import java.security.InvalidKeyException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Properties;
-import java.util.ResourceBundle;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.HostnameVerifier;
@@ -30,6 +28,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 import org.apache.commons.codec.binary.Hex;
 
@@ -66,11 +65,11 @@ public class APIController {
 
 //            ReqQrAuth qrAuth = new ReqQrAuth();
 //            authString = qrAuth.Authenticate(username, password,authToken,ipAddress,userAgent, details);  
-        }else if (reqMethod.equals("9")) {
+        } else if (reqMethod.equals("9")) {
             ReqSigningOTPAuth signingAuth = new ReqSigningOTPAuth();
             authString = signingAuth.Authenticate(username, password, ipAddress, userAgent);
-        
-        }else if (reqMethod.equals("4")) {
+
+        } else if (reqMethod.equals("4")) {
 
             ReqQrAuth qrAuth = new ReqQrAuth();
             authString = qrAuth.Authenticate(username, password, authToken, ipAddress, userAgent, details);
@@ -103,7 +102,7 @@ public class APIController {
         } else if (authMethod.equals("5")) {
             CROTPAuth otpAuth = new CROTPAuth();
             authString = otpAuth.Authenticate(username, password, otp, otpChallenge, authToken, ipAddress, userAgent, browserFp);
-        } else if (authMethod.equals("9")){
+        } else if (authMethod.equals("9")) {
             SigningOTPAuth signingAuth = new SigningOTPAuth();
             authString = signingAuth.Authenticate(username, password, otp, otpChallenge, authToken, ipAddress, userAgent, browserFp);
         } else if (authMethod.equals("1")) {
@@ -138,7 +137,7 @@ public class APIController {
         } else if (authMethod.equals("5")) {
             CROTPAuth crOtpAuth = new CROTPAuth();
             authString = crOtpAuth.Authenticate(username, ipAddress, otp, otpChallenge, authToken, ipAddress, userAgent, browserFp);
-        } else if (authMethod.equals("9") ){
+        } else if (authMethod.equals("9")) {
             SigningOTPAuth signingAuth = new SigningOTPAuth();
             authString = signingAuth.Authenticate(username, ipAddress, otp, otpChallenge, authToken, ipAddress, userAgent, browserFp);
         }
@@ -167,8 +166,7 @@ public class APIController {
         //ResourceBundle resource = ResourceBundle.getBundle("system");
         return sysProp.getProperty(Config.INTEGRATION_KEY);
     }
-    
-    
+
     public static String getCenToken() {
         Config config = new Config();
         Properties sysProp = config.getConfig(Config.TYPE_SYSTEM);
@@ -261,52 +259,58 @@ public class APIController {
 
     public static void main(String args[]) throws UnsupportedEncodingException, Exception {
 
-        String user = "ndthanhuser";
-        String otp = "foo123";
-        String unixTimestamp = String.valueOf(System.currentTimeMillis() / 1000L);
-        //office thanh
-        String secretKey = "p98rjXh03qHX";
-        String integrationKey = "ee9228e350b10b744aff1135e01f3d1c858bcd25e84dd7038946bdb73144653d";
-        System.out.println(generateCenToken("ajwP19HvxYKCKi0qqC9DbYVLj3GxAkSH", "webadmin2jDmXsTYBcoTCsbVoFYuYptF3QPCAsQUZ9eOSe/ySHFQ="));
-        System.out.println(300*1L);
-        
-        
-        String base64Certificate = "MIIFCzCCAvOgAwIBAgIIRXujDXSJpVgwDQYJKoZIhvcNAQELBQAwRjEVMBMGA1UE" +
-            "AwwMTWFuYWdlbWVudENBMSAwHgYDVQQKDBdTZWN1cmVNZXRyaWMgVGVjaG5vbG9n" +
-            "eTELMAkGA1UEBhMCTVkwHhcNMTkwMTE2MDc0MjU0WhcNMjAwNTIyMDQwMDAwWjCB" +
-            "nzEUMBIGA1UEAwwLdGVzdEFnZW5jeTQxDDAKBgNVBAsMA091MTEMMAoGA1UECwwD" +
-            "T3UyMTkwNwYDVQQKDDBDaOG7qW5nIHRoxrAgc+G7kSBuw6B5IMSRw6MgxJHGsOG7" +
-            "o2MgY8OgaSDEkeG6t3QxMDAuBgNVBAcMJ0tow7RuZyB0aOG7gyBn4buNaSB0aMOg" +
-            "bmggcGjhuqduIGNyeXB0bzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB" +
-            "AMS6lLikIdsIV9sIwcYGz6IyGU/p4buk3kyRujzajXOnq1Kq66Qe/sQZ6qdQyq5g" +
-            "td5BRzG2SK0FqerbkS2Xz7XuH889FRyfzy4bFJbrzJWJbQ6hUPEoJPY16nOe8noQ" +
-            "SvYAKOuekb75bUclmezcF7Je2YPqcczhI5kmoS3X0xgvx1YXTlQLSxpt07c4tlCo" +
-            "C9dm+eCZewkTBeJ03gHw9gGHx5oprfK/nICPe2vhsKtgJVYIb1mkpgSlGWfRNmGn" +
-            "6Wbm2D4/UC34BsYif5RS9GyiLt4hyy0fSKSNyujDXpAnEf9u/4oeSb79SmBinac7" +
-            "g5/fKOEloMC7fJU0MwkzFn0CAwEAAaOBojCBnzAMBgNVHRMBAf8EAjAAMB8GA1Ud" +
-            "IwQYMBaAFBd/sGUJlri6pQds5HgMAhDB47MyMCAGA1UdEQQZMBeBFXRlc3RBZ2Vu" +
-            "Y3k0QGdtYWlsLmNvbTAdBgNVHSUEFjAUBggrBgEFBQcDAgYIKwYBBQUHAwQwHQYD" +
-            "VR0OBBYEFJSiKlNit1q6K+07eclO+ckBRN9GMA4GA1UdDwEB/wQEAwIF4DANBgkq" +
-            "hkiG9w0BAQsFAAOCAgEAXJxlAzWngCVFMLZtuZjH3owNLBOxaTODZPmliLFxaY/2" +
-            "BktDSWIfqzqRycG03pGTxNva0Z6jZP+V2/ctDbUQ6/BTDa5cuTg0wNJaFEIftoue" +
-            "BQyVYB+xqtcN9HxdHZJJ+rM2MitE0qTLMdzEGBZOi4JR80NlZ4qtUFltnU3DulP5" +
-            "DLyVhPglSgbMtIGpDVc2E4dohxbat8cNY6O5AbWj7zCdFhWV84IaqT5HYMo1D1rg" +
-            "uFzLK3D8882mC31S2PFsSwdkczQ5DMMkv3sgI3B8T2lEGvt0KCe2GlV0A495FI+0" +
-            "NS7VXfKoTFBkC0KjV5jJpF9piZfqoxJ+It4EIfm092P3tvgEK1pbsiTWYQ1iJfkF" +
-            "PnxK3niP3bdQ3rv2gM8BP3JcMr6v6Srq1Gdd0EemOrqOiwpFR1ZbwuwKv5QZbCH7" +
-            "4m44/gj55AXCTNVqP+w0vmx24e57kNXeuYP894K0zf2lA2jxwT5v7tvCJpMeEW7V" +
-            "Mf3yGfa1ojmY/vHtERUk6txdQS/PGTIOkV/BMMRHruJmL+g6+L7Jsx+8p5d5bXB8" +
-            "odwKc5aFSU+WwIVnAGmKU3pDj2xTm5sTsHMjLqiYhMI3uc0iAebBwmniAo0cJkhR" +
-            "ruiEf8w7gVIMrHkqqtrXdWQA4xsFy9ijS4QpJ4WsTFJO8fZRwCQuWUvgxSGV2YU=";
-        byte[] decodedCertificate = Base64.decode(base64Certificate);
-        InputStream inputStream = new ByteArrayInputStream(decodedCertificate);
-        
-        CertificateFactory factory = CertificateFactory.getInstance("X509");
-        X509Certificate certificate = (X509Certificate) factory.generateCertificate(inputStream);
-        String publicKey = new String(new BigInteger(certificate.getPublicKey().getEncoded()).toString());
-        System.out.println(publicKey);
-        System.out.println(certificate.getSubjectDN().getName());
-        
+//        String user = "webadmin";
+//        String otp = "foo123";
+//        String unixTimestamp = String.valueOf(System.currentTimeMillis() / 1000L);
+//        System.out.println(unixTimestamp);
+//        //office thanh
+//        String secretKey = "p98rjXh03qHX";
+//        String integrationKey = "ee9228e350b10b744aff1135e01f3d1c858bcd25e84dd7038946bdb73144653d";
+//        System.out.println(calculateHmac256(secretKey, user + otp + integrationKey + unixTimestamp));
+//        System.out.println(generateCenToken("p8l41FbjuxQ9z4m2dkztpDsnbMoi2C9k", user + "CCJzCGxw8/9E2IzesoGMqyzz1kqle0NQ1k4xa0nDp7E="));
+
+//        PublicKey publicKey = KeyFactory.getInstance("EC").generatePublic(new X509EncodedKeySpec(Base64.decode("MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQB2ZP5AMQZbKdc3Q7nfSqull0gpVGgjfBxP6Ul+ln1rIhhBt/wD9MIlJw6uyu7oTVSvLtxnqH2txQvxNK2SYAupWsB/iYQ6UxZ8FQ0AesbX7Ld8xrKiQZDt8yDw7wIe2h3AdoQ0PSY9MEkUXN/tgF8DG9gaK22RJBql5XBX9Ho6T4rX8Y=")));
+//
+//        Signature signature = Signature.getInstance("SHA1withECDSA");
+//        signature.initVerify(publicKey);
+//        signature.update("https://192.168.1.202/CentagateWS/webresources|d8d7f4806a35bfac6ea3df56c276c5ff".getBytes());
+//        final boolean verify = signature.verify(Base64.decode("MIGIAkIAux36oAW4G2AWs3Tc9YepPb0IIMiEVlqBxYiDw+73C5chOMu2k7GC4q+VDHLV5iggKFpd+W5xGLHsSd+tMhPwCYoCQgFybJGV9FsN9JizF+SQoZ7zj/ubWm/B8MMp8YPtivK/zrNvAVTCwfw8oEqbAshmwC9p30Qup9TuaZ/eoe4jRSGIjw=="));
+//        System.out.println(verify);
+
+        com.sun.jersey.api.client.Client client = RestfulUtil.buildClient();
+        HashMap<String, String> map = new HashMap();
+        map.put("username", "thanhthanhthanh");
+        map.put("firstName", "Thanh");
+        map.put("lastName", "Nguyen Dang");
+        map.put("userApp", "testSMS2");
+        map.put("userUniqueId", " ");
+        map.put("userClientId", "thanhthanhthanh");
+        map.put("cenToken", "2681f8b16d8182222dbb79d76e14ab77e5afde71baac2eccbe9826508ee81090");
+
+        //map.put("cenToken", APIController.getCenToken());
+        WebResource service = client.resource(UriBuilder.fromUri("https://118.70.13.108:3443/CentagateWS/webresources").build()).path("user").path("registerUserActive").path("webadmin");
+
+        for (int i=0;i<5;i++) {
+            new Thread(new AddUserThread(service, map)).start();
+        }
+
     }
 
+
+}
+
+class AddUserThread implements Runnable {
+    private final WebResource service;
+    private final HashMap<String, String> map;
+
+    public AddUserThread(WebResource service, HashMap<String, String> map) {
+        this.service = service;
+        this.map = map;
+    }
+    
+    @Override
+    public void run() {
+        service.accept(MediaType.APPLICATION_JSON).put(ClientResponse.class, new Gson().toJson(map));
+    }
+    
 }

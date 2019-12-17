@@ -31,7 +31,7 @@ function getInvoke(req, username, amt, fromacct, toacc, effdate, recmail, desc) 
 
         var plainText = WebSafeBase64.encode(dataToSign, true);
         console.log(plainText);
-        p7SignByP11(false, plainText, 0, onSignCallback, username);
+        p7SignByCsp(false, plainText, 0, onSignCallback, username);
         return;
     }
     if (xmlhttp) {
